@@ -1,8 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
+  reactStrictMode:true,
+  poweredByHeader: false,
+  swcMinify: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'qmvirlrqiiehntmvzgdb.supabase.co',
+      },
+    ],
   },
 }
 
-module.exports = nextConfig
+module.exports = nextConfig;
