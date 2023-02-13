@@ -8,22 +8,22 @@ export declare interface IOrderContext {
 	setId: Dispatch<SetStateAction<string>>
 	email: string
 	setEmail: Dispatch<SetStateAction<string>>
-  	firstName: string
-  	setFirstName: Dispatch<SetStateAction<string>>
+	firstName: string
+	setFirstName: Dispatch<SetStateAction<string>>
 	lastName: string
-  	setLasttName: Dispatch<SetStateAction<string>>
+	setLasttName: Dispatch<SetStateAction<string>>
 	country: string
-  	setCountry: Dispatch<SetStateAction<string>>
+	setCountry: Dispatch<SetStateAction<string>>
 	stateProvince: string
-  	setStateProvince: Dispatch<SetStateAction<string>>
+	setStateProvince: Dispatch<SetStateAction<string>>
 	city: string
-  	setCity: Dispatch<SetStateAction<string>>
+	setCity: Dispatch<SetStateAction<string>>
 	address1: string
-  	setAddress1: Dispatch<SetStateAction<string>>
+	setAddress1: Dispatch<SetStateAction<string>>
 	address2: string
-  	setAddress2: Dispatch<SetStateAction<string>>
+	setAddress2: Dispatch<SetStateAction<string>>
 	zipcode: string
-  	setZipcode: Dispatch<SetStateAction<string>>
+	setZipcode: Dispatch<SetStateAction<string>>
 	items: Item[]
 	paymentMethod: string
 	setPaymentMethod: Dispatch<SetStateAction<string>>
@@ -31,7 +31,6 @@ export declare interface IOrderContext {
 	shippingCost: number
 	shipped: boolean
 	received: boolean
-	createOrder: Function
 }
 
 export declare interface IOrder {

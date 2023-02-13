@@ -64,15 +64,10 @@ export const OrderContextProvider = ({ children }:{children: React.ReactNode}) =
 				zipcode,
 				setZipcode,
 				items,
-				setItems,
 				paymentMethod,
 				setPaymentMethod,
 				totalPrice,
-				setTotalPrice,
-				// shippingCost,
-				// shipped,
-				// received,
-				fetchOrders,
+				// fetchOrders,
 			}}
 		>
 			{children}

@@ -11,7 +11,7 @@ const createItemProcedure = publicProcedure
       quantity: z.number(),
       itemType: z.string(),
       subType: z.string(),
-      description: z.string(),
+      description: z.string()
     })
   ).mutation( 
     async ({ input }) => {
