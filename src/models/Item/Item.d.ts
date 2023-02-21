@@ -28,7 +28,7 @@ export declare interface Item {
   id: string
   name: string
   img: StaticImageData|string|null
-  imgLocation: string|null
+  imgLocation?: string|null|undefined
   price: number
   quantity: number
   itemType: string

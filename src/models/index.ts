@@ -6,3 +6,5 @@ export type {IOrderContext, IOrder} from "./Order/Order";
 
 export {defaultAuthContext} from './Auth/defaultAuth';
 export type {IAuthContext} from "./Auth/Auth";
+
+export type {Charge} from "./Stripe/Charge";

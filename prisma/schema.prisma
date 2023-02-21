@@ -12,7 +12,7 @@ datasource db {
 }
 
 model Item {
-  id String @id @default(cuid())
+  id String @id @default(cuid()) @unique
   name String
   img String
   price Int
@@ -21,12 +21,12 @@ model Item {
   quantity Int
   description String
   order Order? @relation(fields:[orderId], references:[id])
-  orderId String?
-  createdAt DateTime @default(now())
+  orderId String? @unique
+  createdAt DateTime? @default(now())
 }
 
 model Order {
-  id String @id @default(cuid())
+  id String @id @default(cuid()) @unique
   email String
   firstName String
   lastName String
@@ -39,7 +39,15 @@ model Order {
   items Item[]
   paymentMethod String
   totalPrice Int
-  shippingCost Int
-  shipped Boolean @default(false)
-  received Boolean @default(false)
+  
+  //Stripe
+  paymentId String?
+  customerId String? @unique
+  idempotencyKey String?
+  receiptUrl String? @unique //##email to customer
+  paymentStatus String @default("pending") //[failed, pending, complete]
+
+  shippingCost Int?
+  shipped Boolean? @default(false)
+  received Boolean? @default(false)
 }
