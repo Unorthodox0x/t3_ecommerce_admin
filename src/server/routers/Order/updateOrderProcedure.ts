@@ -1,16 +1,17 @@
-import { prisma } from "../prisma";
-import { publicProcedure } from '../trpc';
+import { prisma } from "@/server/prisma";
+import { publicProcedure } from '@/server/trpc';
 import { z } from 'zod';
 
 /**
- * This procedure is called after reception of 
+ * @triggered This procedure is called after reception of 
  *   webhook type:success from stripe.
- * An order object is created in Prisma DB before
- *   triggering a call to quickbooks to create bill
+ * 
+ * @does Prisma is used to create an order object in DB before
+ *   triggering a call to quickbooks to create a bill
  */
 const updateOrderProcedure = publicProcedure
   .input(
-    z.object({ 
+    z.object({
       paymentId: z.string(),
       idempotencyKey: z.string().nullable().optional(),
       amount: z.number(),

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext } from "react";
+import React, { useState, useEffect, createContext, ReactNode, ReactElement } from "react";
 import {
     defaultAuthContext,
     IAuthContext,
@@ -13,7 +13,7 @@ import type {Session} from "@supabase/supabase-js";
  */
 export const AuthContext = createContext<IAuthContext>(defaultAuthContext);
 
-export const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthContextProvider = ({ children }: { children: ReactNode }):ReactElement => {
 
     const [email, setEmail] = useState <string>("");
     const [session, setSession] = useState<Session|undefined>(undefined)

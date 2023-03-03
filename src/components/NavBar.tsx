@@ -15,6 +15,9 @@ const NavBar:React.FunctionComponent = () => {
 	}, {
 		name: "Create",
 		link: "/"
+	},{
+		name: "Orders",
+		link: "/orders"
 	}]
 
 	return (

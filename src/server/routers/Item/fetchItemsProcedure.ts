@@ -1,5 +1,5 @@
-import { prisma } from "../prisma";
-import { publicProcedure } from '../trpc';
+import { prisma } from "@/server/prisma";
+import { publicProcedure } from '@/server/trpc';
 import { z } from 'zod';
 
 const fetchItemsProcedure = publicProcedure

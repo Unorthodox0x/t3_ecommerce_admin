@@ -11,12 +11,13 @@ export const defaultOrder:IOrder = {
 	addressline: "",
 	addressline2: "",
 	zipcode: "",
+	phoneNumber: "",
 	items: [],
 	paymentMethod: "",
 	totalPrice: 0,
-	shippingCost: 0,
 	shipped: false,
-	received: false
+	received: false,
+	createdAt: new Date(),
 }
 
 export const defaultOrderContext:IOrderContext = {
@@ -39,9 +40,9 @@ export const defaultOrderContext:IOrderContext = {
 	address1: "",
 	setAddress1: () => {},
 	address2: "",
-  	setAddress2: () => {},
+	setAddress2: () => {},
 	zipcode: "",
-  	setZipcode: () => {},
+	setZipcode: () => {},
 	items: [],
 	paymentMethod: "",
 	setPaymentMethod: () => {},

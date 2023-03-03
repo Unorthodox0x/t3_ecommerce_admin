@@ -1,5 +1,5 @@
+import React, { useState, createContext, ReactNode, ReactElement } from "react";
 import { StaticImageData } from "next/image";
-import React, { useState, createContext } from "react";
 import {
 	defaultItemContext, IItemContext,
 	defaultItem
@@ -11,7 +11,7 @@ import {trpc} from "../utils/trpc";
  */
 export const ItemContext = createContext<IItemContext>(defaultItemContext);
 
-export const ItemContextProvider = ({children}:{children: React.ReactNode}) => {
+export const ItemContextProvider = ({children}:{children: ReactNode}):ReactElement => {
 
 	const [id, setId] = useState<string>(defaultItem.id);
 	const [name, setName] = useState<string>(defaultItem.name);

@@ -1,6 +1,6 @@
-import * as logger from "../../utils/Logger/index.js";
-import { MongoError } from "../../utils/Errors/mongo-errors.js";
-import QuickbooksToken from "../../models/quickbooksTokenModels.js";
+// import * as logger from "../../utils/Logger/index.js";
+import { OAuthClient } from "intuit-oauth";
+
 /**
  * This component component establishes a connection to quickbooks 
  *   via their provided credentials. 
@@ -14,8 +14,11 @@ import QuickbooksToken from "../../models/quickbooksTokenModels.js";
  *   refreshToken: makes further requests to quickbook to create a new token when expired
  *   setTokenFromCallback:
  */
-export default function makeAuthClient({ configOptions, oauthClient }) {
-  
+export default function makeAuthClient(
+    configOptions: OAuthClient.OAuthClientConfig, 
+    oauthClient: OAuthClient
+  ) {
+ 
   /**
    *  Restore qb token from DB
    *   -Get token from Db
@@ -25,13 +28,13 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
    *       use token to get new token
    *   -if not rereshed, clear, token from oauthClient
    */
-  const attemptRestoreToken = async() => { //initQuickbooks
+  const attemptRestoreToken = async():Promise<void> => { //initQuickbooks
     try{
       const { expireOffset } = configOptions
-      logger.debug("loaded token from DB", `${expireOffset}` );
+      // logger.debug("loaded token from DB", `${expireOffset}` );
       const tokenInfo = await getTokenFromDB();
       if(!tokenInfo) {
-        logger.debug('Token not found');
+        // logger.debug('Token not found');
         return;
       }
 
@@ -104,7 +107,7 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
    */
   const scheduleRefreshToken = async () => {
     try{
-      var { validWindow, expireOffset } = configOptions
+      const { validWindow, expireOffset } = configOptions
       const tokenInfo = oauthClient.getToken();
       logger.info('schedule token refresh')
       const isValidToken = await oauthClient.isAccessTokenValid();
@@ -112,13 +115,13 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
       if(!isValidToken) return;
       
       const expiredFromUpdated =
-        (Math.floor(new Date()) - Math.floor(tokenInfo.createdAt)) / 1000; // in secs
+        (Math.floor(Date.now()) - Math.floor(tokenInfo.createdAt)) / 1000; // in secs
       if (
         isValidToken ||
         expiredFromUpdated < tokenInfo.x_refresh_token_expires_in
       ) {
         const willExpireInSecs =
-          (tokenInfo.createdAt - Math.floor(new Date())) / 1000 +
+          (tokenInfo.createdAt - Math.floor(Date.now())) / 1000 +
           tokenInfo.expires_in;
 
         setTimeout(async () => { //schedules first refresh from token present
@@ -156,7 +159,7 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
   }
 
   const setToken = async({ tokenInfo }) => {
-    var { realmId } = configOptions;
+    const { realmId } = configOptions;
     try{
       return await oauthClient.setToken({
           realmId: !!tokenInfo.realmId ? tokenInfo.realmId: realmId,
@@ -196,7 +199,7 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
       };
     }catch(error){
       logger.debug(`tokenInfo`, `${error}`)
-      throw new Error(error)
+      throw new Error(error?.message)
     }
   }
 
@@ -208,13 +211,13 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
    */
   const prepTokenSaveDb = () => {
     try{
-      let tokenInfo = oauthClient.getToken();
+      const tokenInfo = oauthClient.getToken();
       tokenInfo.createdAt = new Date();
       tokenInfo.updatedAt = new Date();
       return tokenInfo;
     }catch(error){
       logger.debug(`saveToken`, `${error}`)
-      throw new Error(error)
+      throw new Error(error?.message)
     }
   };
 
@@ -230,19 +233,26 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
     try{
       const tokenInfo = prepTokenSaveDb();
       logger.info('Attempt save...', tokenInfo)
-      const tokenDB = await QuickbooksToken;
-      await tokenDB.collection.deleteMany({});
-      const saveResult = await tokenDB.collection
-        .insertOne(tokenInfo)
-        .catch((mongoError) => {
-          throw new MongoError(mongoError);
-        });
 
-      logger.debug("Quickbooks token saved", { saveResult });
+
+      //PRISMA REQUEST
+
+
+      // const tokenDB = await QuickbooksToken;
+      // await tokenDB.collection.deleteMany({});
+      // const saveResult = await tokenDB.collection
+      //   .insertOne(tokenInfo)
+      //   .catch((error) => {
+      //     throw new Error(error?.message);
+      //   });
+
+
+
+      // logger.debug("Quickbooks token saved", { saveResult });
       return (!!saveResult.acknowledged)
     }catch(error){
       logger.debug(`saveTokenToDB`, `${error}`)
-      throw new Error(error)
+      throw new Error(error?.message)
     }
   };
 
@@ -252,10 +262,11 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
    */
   const getTokenFromDB = async () => {
     try{
-      const tokenDB = await QuickbooksToken;
-      return await tokenDB
-        .findOne()
-        .catch((mongoError) => { throw new MongoError(mongoError) });
+      //PRISMA REQUEST
+
+      // return await tokenDB
+      //   .findOne()
+      //   .catch((error) => { throw new MongoError(mongoError) });
     }catch(error){
       logger.debug(`getTokenFromDB`, `${error}`)
       throw new Error('error');
@@ -277,7 +288,7 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
       return await oauthClient.authorizeUri({ scope });
     }catch(err){
       logger.debug("getAuthUrl", `${err}`)
-      throw new Error(err)
+      throw new Error(err?.message)
     }
   };
 
@@ -292,41 +303,37 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
   const setTokenFromCallback = async ({ url }) => {
     try{
       const tokenInfo = await createToken({ url });
-      logger.info(`setTokenFromCallback - token set`, tokenInfo)
+      if(!tokenInfo) throw new Error('Quickbooks init failed')
+      // logger.info(`setTokenFromCallback - token set`, tokenInfo)
       await setToken({ tokenInfo })
+      const dbSaveResult = await saveTokenToDB();
+      console.log("dbSaveResult", dbSaveResult)
+      if(!dbSaveResult) logger.debug("Token not set");
 
+      //form loop from token creation event
+      await attemptRestoreToken();
+      scheduleRefreshToken();
 
+      return dbSaveResult;
 
-      if (!!tokenInfo) {
-        const dbSaveResult = await saveTokenToDB();
-        console.log("dbSaveResult", dbSaveResult)
-        if(!dbSaveResult) logger.debug("Token not set");
-
-        //form loop from token creation event
-        await attemptRestoreToken();
-        scheduleRefreshToken();
-
-        return dbSaveResult;
-      } else{
-        throw new Error('Callback failed')
-      }
     } catch(err) {
-      logger.debug('setToken', `${err}`)
-      throw new Error(err);
+      // logger.debug('setToken', `${err}`)
+      throw new Error(err?.message);
     }
   };
 
   const deleteToken = async () => {
     try{
-      const tokenDB = await QuickbooksToken;
-      return await tokenDB.collection
-      .deleteMany({})
-      .catch((mongoError)=> {
-        throw new MongoError(mongoError)
-      });
+      //PRISMA REQUEST 
+
+      // return await tokenDB.collection
+      // .deleteMany({})
+      // .catch((mongoError)=> {
+      //   throw new MongoError(mongoError)
+      // });
     } catch (error){
-      logger.debug('delete token failed', `${error}`)
-      throw new MongoError(mongoError)
+      // logger.debug('delete token failed', `${error}`)
+      throw new Error(error?.message);
     }
 
   }
@@ -344,4 +351,4 @@ export default function makeAuthClient({ configOptions, oauthClient }) {
     setTokenFromCallback,
     deleteToken,
   });
-};
+}

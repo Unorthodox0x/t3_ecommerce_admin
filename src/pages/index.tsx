@@ -3,7 +3,7 @@ import {AuthContext} from "@/context/AuthContext";
 import { MainSection } from "@/components/index";
 import { ItemContextProvider } from "@/context/ItemContext";
 
-export default function Create() {
+export default function ItemMain() {
     
     const { session } = useContext(AuthContext);
 

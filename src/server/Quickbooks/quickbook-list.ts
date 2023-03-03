@@ -1,18 +1,10 @@
-import mongoose from "mongoose";
-import _ from "lodash";
-import * as logger from "../../utils/Logger/index.js";
-import validateObjectId from "../../utils/Validation/validate-object-id.js"
-import { QuickbooksError } from "../../utils/Errors/errors.js";
-import { MongoError } from "../../utils/Errors/mongo-errors.js";
-import makeTransaction from "../Transactions/Validation/transaction.js";
-import makeQuickbookBill from "./Validation/bill.js"
-import makeQuickbookVendor from './Validation/vendor.js';
-import { QueueProcesses } from "../../queue/queue-processes.js";
-import { createJob } from "../../queue/producer.js";
-import { Payout } from "../Transactions/models/payouts.js";
+// import * as logger from "../../utils/Logger/index.js";
+// import { QuickbooksError } from "../../utils/Errors/errors.js";
+// import { QueueProcesses } from "../../queue/queue-processes.js";
+// import { createJob } from "../../queue/producer.js";
 import { makeQBApi } from "./config.js";
 
-export default function makeQuickbookList({ qbApi, UserQuickbook, Transaction }) {
+export default function makeQuickbookList({}) {
 
   /**
    * Creates a Master account for UCM to include in
@@ -27,7 +19,7 @@ export default function makeQuickbookList({ qbApi, UserQuickbook, Transaction })
       const MasterAccount = {
         //Id: //undefined for QB to generate
         //SyncToken to be defined by QB
-        Name: "UnchainedMusic App",
+        Name: "App",
         domain: "qbApi",
         AccountType: "Expense",
         CurrencyRef: {
@@ -35,11 +27,10 @@ export default function makeQuickbookList({ qbApi, UserQuickbook, Transaction })
           "value": "USD"
         },
       }
-      const { accountObject, resolveErr } = await createAccount(MasterAccount)
+      const { accountObject } = await createAccount(MasterAccount)
         .then((accountObject) => { return { accountObject } })
-        .catch((resolveErr) => { throw new QuickbooksError(resolveErr) });
+        .catch((resolveErr) => { throw new Error(resolveErr) });
 
-      if(resolveErr) throw new QuickbooksError(resolveErr);
       logger.info('Master account created', `${accountObject}`)
     }catch(error){
       logger.debug(`Create UCM account failed`, `${error}`)
@@ -56,13 +47,12 @@ export default function makeQuickbookList({ qbApi, UserQuickbook, Transaction })
    */
   const createVendor = async ({ newUser }) => {
     try{
-      const { createdVendor, resolveErr } = await createQBVendor({ newUser })
+      const { createdVendor } = await createQBVendor({ newUser })
         .then((createdVendor) => { return { createdVendor } })
-        .catch((resolveErr) => { throw new QuickbooksError(resolveErr) });
+        .catch((resolveErr) => { throw new Error(resolveErr) });
 
-      if (resolveErr) throw new QuickbooksError(resolveErr)
       logger.info('new vendor created') 
-      return await updateUCMVendor({
+      return await updateAppVendor({
         userId: newUser._id, 
         Id: createdVendor.Id,
         SyncToken: createdVendor.SyncToken,
@@ -90,11 +80,10 @@ export default function makeQuickbookList({ qbApi, UserQuickbook, Transaction })
       const Id = uQbInfo[0]?.qbId //should only be 1 in array
       
       if(!Id) throw new Error('Vendor not found')
-      const { vendorObject, resolveErr } = await getQBVendor({ Id })
+      const { vendorObject } = await getQBVendor({ Id })
         .then((vendorObject) => { return { vendorObject } })
-        .catch((resolveErr) => { throw new QuickbooksError(resolveErr) });
+        .catch((resolveErr) => { throw new Error(resolveErr) });
       
-      if(resolveErr) throw new QuickbooksError(resolveErr)
       if(!vendorObject) throw new Error('Vendor not found')      
       if(!!vendorObject && !!uQbInfo) return { vendorObject, uQbInfo };
     }catch(error){
@@ -108,39 +97,13 @@ export default function makeQuickbookList({ qbApi, UserQuickbook, Transaction })
    */
   const getUCMVendor = async ({ userId }) => {
     try{
-      const validId = validateObjectId(userId)
-      return await UserQuickbook.find({ userId: validId })
-        .catch((mongoError) => { throw new MongoError(mongoError) });
+      
+      //prisma request
+      // return await UserQuickbook.find({ userId: validId })
+      //   .catch((error) => { throw new Error(error) });
+
     } catch(error){
       logger.debug('error', `${error}`)
-      throw new Error(mongoError)
-    }
-  }
-
-  /**
-   * Update a vendor [Stored in QB && UCM]
-   *   currently called from queue tasks schedules after updates
-   *    to user's info in userList. Keeps User's info current with
-   *     quickbooks data. (name, email, ...)
-   */
-  const updateVendor = async ({ existingUser }) => {
-    try{
-      const { vendorObject, uQbInfo } = await getVendor({ userId: existingUser._id, });
-      const { Id, SyncToken } = vendorObject;
-
-      const { updatedVendor, resolveErr } = await updateQBVendor({ existingUser, Id, SyncToken })
-        .then((updatedVendor) => { return { updatedVendor } })
-        .catch((resolveErr) => { throw new QuickbooksError(resolveErr) });
-
-      logger.info("QB vendor updated")
-      if (resolveErr) throw new QuickbooksError(resolveErr)
-      return await updateUCMVendor({
-        userId: existingUser._id, 
-        Id: updatedVendor.Id,
-        SyncToken: updatedVendor.SyncToken
-      });
-    }catch(error){
-      logger.debug(`Update vendor failed`, error)
       throw new Error(error)
     }
   }
@@ -155,37 +118,39 @@ export default function makeQuickbookList({ qbApi, UserQuickbook, Transaction })
    * @param {userId} string
    * @returns {Object} | {Id:string, SyncToken:string }
    */
-  const updateUCMVendor = async ({ userId, Id, SyncToken }) => {
+  const updateAppVendor = async ({ userId, Id, SyncToken }) => {
     try{
       const validId = validateObjectId(userId)
-      const result = await UserQuickbook
-        .findOneAndUpdate({
-          userId:validId
-        },{
-          $set:{
-            qbId:Id,
-            qbSyncToken:SyncToken,
-          }
-        }, { 
-          upsert: true,
-          new: true, //if false, returns null on upsert
-      }).catch((mongoError) => {
-        throw new MongoError(mongoError);
-      });
+      
+      //Prisma REQUEST
+      // const result = await UserQuickbook
+      //   .findOneAndUpdate({
+      //     userId:validId
+      //   },{
+      //     $set:{
+      //       qbId:Id,
+      //       qbSyncToken:SyncToken,
+      //     }
+      //   }, { 
+      //     upsert: true,
+      //     new: true, //if false, returns null on upsert
+      // }).catch((mongoError) => {
+      //   throw new MongoError(mongoError);
+      // });
 
       //can use upserted Count to decide schedule task???
-      if(!!result._id){
-        return await createJob(
-            QueueProcesses.userFinancialAccount.updateAccount,
-            {
-              userId: mongoose.Types.ObjectId(userId),
-              data: { quickbooksAccount: result._id }
-            }
-        );
-      } else {
-        logger
-        throw new Error('Stored Vendor not modified')
-      } 
+      // if(!!result._id){
+      //   return await createJob(
+      //       QueueProcesses.userFinancialAccount.updateAccount,
+      //       {
+      //         userId: mongoose.Types.ObjectId(userId),
+      //         data: { quickbooksAccount: result._id }
+      //       }
+      //   );
+      // } else {
+      //   logger
+      //   throw new Error('Stored Vendor not modified')
+      // } 
     }catch(error){
       logger.debug(`Update UCM vendor`, `${error}`)
       throw new Error(error)
@@ -209,10 +174,10 @@ export default function makeQuickbookList({ qbApi, UserQuickbook, Transaction })
       const {vendorObject} = await getVendor({ userId: normalTransaction.userId });
       const { Id:vendorId, DisplayName }= vendorObject;
 
-      const { createdBill, resolveErr } = await createQBBill({  
+      const { createdBill } = await createQBBill({  
         normalTransaction, vendorId, DisplayName
       }).then((createdBill) => { return { createdBill } })
-        .catch((resolveErr) => { throw new QuickbooksError(resolveErr) });
+        .catch((resolveErr) => { throw new Error(resolveErr) });
 
       if (resolveErr) throw new QuickbooksError(resolveErr);
       if(!!createdBill){

@@ -13,10 +13,14 @@ module.exports = {
   theme: {
     extend: {
       height: {
-        'GalleryItem': '668px'
+        'GalleryItem': '668px',
+        'OrderPreview': '350px',
+        'DisplayOrder': "1050px",
       },
       width: {
         "GalleryItem": "384px",
+        'OrderPreview': '628px',
+        'DisplayOrder': "800px",
         "90": "350px"
       },
       maxWidth: {

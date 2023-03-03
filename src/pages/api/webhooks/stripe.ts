@@ -19,9 +19,12 @@ export default async function handler(
 	response:NextApiResponse
 ) {
 	if(request.method === 'POST'){
+
+		//EXTRACT SIGNATURE FOR VERIFICATION
 		const sig = request.headers['stripe-signature'];
 		if(!sig) throw new Error("invalid request");
 
+		//EXTRACT INFORMATION IN BODY FROM REQUEST
 		let body = ''
     request.on('data', (data) => {
       body += data
@@ -33,20 +36,18 @@ export default async function handler(
 				response.status(400).send(`Webhook Error: ${err?.message}`);
 			}
     })
-
-		//undefined
-		//need middleware to exract raw body??
-
-		// const {type}:{type:string} = request.body;
-
+		
 		// Return a 200 response to acknowledge receipt of the event
+		// else a second request wil be sent
 		response.send(200);
 	}
 }
 
 
 function handleStripeWebhook(sig, body) {
+		//INSTANTIATE STRIPE INSTANCE
 		const stripe = new Stripe(stripeKey, { apiVersion: "2022-11-15" })
+		//INSTANTIATE TRPC FUNCTION CALLER
 		const caller = appRouter.createCaller({});
 
 		let event;
@@ -54,17 +55,18 @@ function handleStripeWebhook(sig, body) {
 			//Verify Webhook Signature belongs to stripe
 			event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
 		} catch (err) {
+			//INVALID WEBHOOK, THROW ERR
 			console.error('err', err?.message)
 			throw new Error('Webhook request error')
 			return;
 		}
 
-		// Handle the event
+		// WEBHOOK VALID, Handle the event
 		let paymentIntentStatus;
 		switch (event.type) {
 			case 'payment_intent.succeeded':
 				paymentIntentStatus = event.data.object;
-				console.log('paymentIntentStatus', paymentIntentStatus)
+				//UPDATE PAYMENT STATUS OF CUSTOMER ORDER
 				caller.updateOrder({ 
 					paymentId: paymentIntentStatus?.id,
 					idempotencyKey: event.request?.idempotency_key,
@@ -74,23 +76,16 @@ function handleStripeWebhook(sig, body) {
 					status: paymentIntentStatus.status,
 					customerId: paymentIntentStatus.customerId
 				})
-				// Then define and call a function to handle the event payment_intent.payment_failed
 				break;
 			case 'payment_intent.failed':
 				paymentIntentStatus = event.data.object;
-				console.log('payment processing', paymentIntentStatus)
-				// Then define and call a function to handle the event payment_intent.processing
+				//DELETE INFO FOR INVALID ORDER
+				caller.deleteOrder({
+					customerId: paymentIntentStatus.customerId
+				})
 				break;
-
-			// ... handle other event types
 			default:
-			console.log(`Unhandled event type ${event.type}`);
+				console.log(`Unhandled event type ${event.type}`);
+				throw new Error(`Unhandled event type ${event.type}`)
 		}
 }
-
-
-// paymentIntentStatus.id: 'ch_3MbAeMAU2xpKVkY10bfZ1rSD',
-// paymentIntentStatus.amount: 520,
-// paymentIntentStatus.amount_captured: 520,
-// paymentIntentStatus.receipt_url: 'https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xTVg1Y3lBVTJ4cEtWa1kxKMT3qp8GMgYY8aZ7mrA6LBZUlin9bC9Q0gRn28LudAvWaC-LnuM7_HbunlD1l1dahT_K4BkZ3UVU4P1a',
-// paymentIntentStatus.status: 'succeeded',

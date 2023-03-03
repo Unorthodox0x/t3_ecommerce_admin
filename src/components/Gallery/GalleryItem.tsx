@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useContext } from "react"
+import React, { useContext } from "react"
 import { ItemContext } from "@/context/ItemContext";
 import Image from "next/image";
-import images from "../Assets";
+import images from "@/Assets";
 import numeral from "numeral";
 import {Item} from "@/models/index";
 
@@ -20,26 +20,8 @@ interface CustomPageProps {
 export default function GalleryItem(props:CustomPageProps) {
 	const { item }:{item:Item} = props;
 	const { handleDelete } = useContext(ItemContext);
-	// const [preview, setPreview] = useState<string>("");
 	console.log('item',item)
-    // /**
-    //  * After image upload changeEvent, 
-    //  *   create blob url to display img preview in browser
-    //  */
-    // useEffect(() => {
-    //     //TODO: REMOVE STRING FROM MODEL sent to trpc
-    //     if (!item.img || typeof item.img === "string") {
-    //         setPreview("")
-    //         return
-    //     }
 
-    //    // create the preview
-    //    const objectUrl:string = URL.createObjectURL(item.img)
-    //    setPreview(objectUrl);
-       
-    //    // free memory when ever this component is unmounted
-    //    return () => URL.revokeObjectURL(objectUrl)
-    // }, [item])
 	return (
 		<div 
 			className="relative h-GalleryItem w-GalleryItem rounded-2xl border-2 border-pink-400 bg-transparent shadow-3xl"
@@ -52,8 +34,7 @@ export default function GalleryItem(props:CustomPageProps) {
 				<Image 
 					src={item.img ? item.img: images.Logo} 
 					alt="Item Image" 
-					height={468}
-					width={378}
+					layout="fill"
 				/>
 
 				{/*BACK ELEMENTS NESTED IN COMPONENT */}
@@ -90,19 +71,11 @@ export default function GalleryItem(props:CustomPageProps) {
 							price: {numeral(item.price).format("$0,0.00")}
 						</p>
 						
-						{item?.sold ? (
-							<p 
-								className="flex h-10 w-28 text-3xl items-center justify-center bg-red-400 hover:bg-purple-500 rounded-xl cursor-pointer"
-							>
-								Sold
-							</p>
-						): 	!item?.sold ? (
-							<p 
-								className="flex h-10 w-28 text-3xl items-center justify-center bg-green-400 hover:bg-purple-500 rounded-xl cursor-pointer"
-							>
-								Available								
-							</p>
-						): null }
+						<p 
+							className="flex h-10 w-36 text-3xl items-center justify-center bg-green-400 hover:bg-purple-500 rounded-xl cursor-pointer"
+						>
+							Available								
+						</p>
 					</div>
 				</div>
 			</div>

@@ -15,13 +15,13 @@ export declare interface IItemContext {
 	quantity: number
 	setQuantity: Dispatch<SetStateAction<number>>
   itemType: string
-	setItemType: Dispatch<SetStateAction<itemType>>
+	setItemType: Dispatch<SetStateAction<string>>
 	subType: string
-	setSubType: Dispatch<SetStateAction<subType>>
+	setSubType: Dispatch<SetStateAction<string>>
 	description: string
 	setDescription: Dispatch<SetStateAction<string>>
 	handleCreate: () => void
-	handleDelete: () => void
+	handleDelete: (itemId:string) => void
 }
 
 export declare interface Item {
@@ -35,17 +35,4 @@ export declare interface Item {
   subType: string
   description: string
   createdAt: string
-}
-
-export declare interface itemType {
-	Macrame: "Macreme"
-	Gemstone: "Gemstone"
-}
-
-export declare interface subType {
-	Necklace: "Necklace",
-	Bracelet: "Bracelet",
-	Ring: "Ring",
-	Forehead: "Forehead",
-	Waist: "Waist",
 }

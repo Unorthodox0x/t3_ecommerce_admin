@@ -1,6 +1,7 @@
 import React from "react"
-import { GalleryItem } from "./index";
-import {Item} from "@/models/index";
+import { GalleryItem } from "@/components";
+//Types
+import {Item} from "@/models";
 
 interface CustomPageProps {
     row: Item[]
@@ -15,11 +16,7 @@ export default function GalleryRow (props:CustomPageProps) {
 			{row?.map(
 				(object:Item, i:number) => i < 3 && 
 				<div 
-					className={
-						i === 1 
-						? "mb-5 rounded-2xl group perspective preserve-3d" 
-						: "my-5 rounded-2xl group perspective preserve-3d"
-					}
+					className="my-5 rounded-2xl group perspective preserve-3d"
 					key={i}
 				>
 					<GalleryItem 

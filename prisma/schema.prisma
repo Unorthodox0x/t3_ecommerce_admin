@@ -6,48 +6,92 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model Item {
-  id String @id @default(cuid()) @unique
-  name String
-  img String
-  price Int
-  itemType String
-  subType String
-  quantity Int
+  id          String    @id @unique @default(cuid())
+  name        String
+  img         String
+  price       Int
+  itemType    String
+  subType     String
+  quantity    Int
   description String
-  order Order? @relation(fields:[orderId], references:[id])
-  orderId String? @unique
-  createdAt DateTime? @default(now())
+  order       Order?    @relation(fields: [orderId], references: [id])
+  orderId     String?   @unique
+  createdAt   DateTime? @default(now())
 }
 
 model Order {
-  id String @id @default(cuid()) @unique
-  email String
-  firstName String
-  lastName String
-  country String
+  id            String @id @unique @default(cuid())
+  email         String
+  firstName     String
+  lastName      String
+  country       String
   stateProvince String
-  city String
-  addressline String
-  addressline2 String
-  zipcode String
-  items Item[]
+  city          String
+  addressline   String
+  addressline2  String
+  zipcode       String
+  phoneNumber   String
+  items         Item[]
   paymentMethod String
-  totalPrice Int
-  
-  //Stripe
-  paymentId String?
-  customerId String? @unique
-  idempotencyKey String?
-  receiptUrl String? @unique //##email to customer
-  paymentStatus String @default("pending") //[failed, pending, complete]
+  totalPrice    Int
 
+  //Stripe
+  paymentId      String?
+  customerId     String? @unique
+  idempotencyKey String?
+  receiptUrl     String? @unique //##email to customer
+  paymentStatus  String  @default("pending") //[failed, pending, complete]
+
+  //Quickbooks
+  bill   qbBill? @relation(fields: [billId], references: [id])
+  billId String? @unique
+  vendor   QuickbookVendor? @relation(fields: [vendorId], references: [id])
+  vendorId String? @unique
+
+  //Shipping
   shippingCost Int?
-  shipped Boolean? @default(false)
-  received Boolean? @default(false)
+  shipped      Boolean? @default(false)
+  received     Boolean? @default(false)
+
+  createdAt   DateTime? @default(now())
+}
+
+model qbBill {
+  id            String @id @unique @default(cuid())
+  billId        Int
+  billSyncToken String
+  txnId         String
+  vendor   QuickbookVendor @relation(fields: [vendorId], references: [id])
+  vendorId String
+  Order     Order?
+  createdAt DateTime @default(now())
+}
+
+model QuickbookVendor {
+  id          String   @id @unique @default(cuid())
+  qbId        Int
+  qbSyncToken String
+  bills       qbBill[]
+  createdAt   DateTime @default(now())
+  Order       Order[]
+}
+
+model QuickbooksToken {
+  id                         String    @id @default(cuid()) @unique
+  access_token               String
+  refresh_token              String
+  realmId                    String
+  token_type                 String
+  expires_in                 Int
+  x_refresh_token_expires_in Int
+  id_token                   String
+  latency                    Int
+  state                      String
+  createdAt                  DateTime? @default(now())
 }

@@ -1,7 +1,8 @@
-import {GalleryRow} from "./index";
+import {GalleryRow} from "@/components";
 import createRows from "@/utils/createRows";
-import {Item} from "@/models/index"
 import {trpc} from "@/utils/trpc";
+//Types
+import {Item} from "@/models"
 
 /**
  * 

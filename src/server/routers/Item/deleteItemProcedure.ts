@@ -1,6 +1,6 @@
-import { prisma } from "../prisma";
-import { publicProcedure } from '../trpc';
-import {supabase} from "../supabase";
+import { prisma } from "@/server/prisma";
+import { publicProcedure } from '@/server/trpc';
+import {supabase} from "@/server/supabase";
 import { z } from "zod";
 
 const deleteItemProcedure = publicProcedure 
